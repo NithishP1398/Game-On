@@ -24,6 +24,7 @@ resource "aws_iam_role_policy_attachment" "example-AmazonEKSClusterPolicy" {
 #get vpc data
 data "aws_vpc" "default" {
   default = true
+  id      = i-06b9baf51f4a8dde5
 }
 #get public subnets for cluster
 data "aws_subnets" "public" {
@@ -40,6 +41,7 @@ resource "aws_eks_cluster" "example" {
   vpc_config {
     subnet_ids = data.aws_subnets.public.ids
   }
+}
 
   # Ensure that IAM Role permissions are created before and deleted after EKS Cluster handling.
   # Otherwise, EKS will not be able to properly delete EKS managed EC2 infrastructure such as Security Groups.
@@ -87,7 +89,7 @@ resource "aws_eks_node_group" "example" {
 
   scaling_config {
     desired_size = 1
-    max_size     = 2
+    max_size     = 1
     min_size     = 1
   }
   instance_types = ["t2.medium"]
