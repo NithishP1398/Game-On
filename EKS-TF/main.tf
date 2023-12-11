@@ -1,6 +1,7 @@
 data "aws_iam_policy_document" "assume_role" {
   statement {
     effect = "Allow"
+ 
 
     principals {
       type        = "Service"
@@ -9,13 +10,16 @@ data "aws_iam_policy_document" "assume_role" {
 
     actions = ["sts:AssumeRole"]
   }
+																			 
 }
 
+						  
 resource "aws_iam_role" "example" {
   name               = "eks-cluster-cloud"
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
 }
 
+											
 resource "aws_iam_role_policy_attachment" "example-AmazonEKSClusterPolicy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
   role       = aws_iam_role.example.name
@@ -24,12 +28,18 @@ resource "aws_iam_role_policy_attachment" "example-AmazonEKSClusterPolicy" {
 #get vpc data
 data "aws_vpc" "default" {
   default = true
-  subnets  = [
-    aws_subnets.public_subnet_az1.id,
-    aws_subnets.public_subnet_az2.id,
-  ]
-  
 }
+
+# Fetch information about the first public subnet
+data "aws_subnet" "public_subnet_az1" {
+  id = "subnet-abcdef1234567890"  # Replace with your actual subnet ID in AZ1
+}
+
+# Fetch information about the second public subnet
+data "aws_subnet" "public_subnet_az2" {
+  id = "subnet-1234567890abcdef"  # Replace with your actual subnet ID in AZ2
+}
+
 #get public subnets for cluster
 data "aws_subnets" "public" {
   filter {
@@ -49,12 +59,15 @@ resource "aws_eks_cluster" "example" {
       data.public_subnet_az2.id,
     ]
   }
+
 # Ensure that IAM Role permissions are created before and deleted after EKS Cluster handling.
   # Otherwise, EKS will not be able to properly delete EKS managed EC2 infrastructure such as Security Groups.
  depends_on = [
     aws_iam_role_policy_attachment.example-AmazonEKSClusterPolicy,
   ]
  }
+
+							 
 resource "aws_iam_role" "example1" {
   name = "eks-node-group-cloud"
 
@@ -70,6 +83,7 @@ resource "aws_iam_role" "example1" {
   })
 }
 
+											   
 resource "aws_iam_role_policy_attachment" "example-AmazonEKSWorkerNodePolicy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
   role       = aws_iam_role.example1.name
@@ -90,7 +104,10 @@ resource "aws_eks_node_group" "example" {
   cluster_name    = aws_eks_cluster.example.name
   node_group_name = "Node-cloud"
   node_role_arn   = aws_iam_role.example1.arn
+					 
   subnet_ids      = data.aws_subnets.public.ids
+										 
+   
 
   scaling_config {
     desired_size = 1
